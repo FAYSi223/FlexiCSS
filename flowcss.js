@@ -56,7 +56,16 @@ class FlowCSS {
         const flowcssElements = document.querySelectorAll("flowcss");
         flowcssElements.forEach(flow => {
             this.parseFlowRules(flow.textContent);
-            flow.remove();
+            flow.remove(); 
+        });
+        const fwcssLinks = document.querySelectorAll("link[href$='.fwcss']");
+        fwcssLinks.forEach(link => {
+            fetch(link.href)
+                .then(response => response.text())
+                .then(cssText => {
+                    this.parseFlowRules(cssText);
+                })
+                .catch(err => console.error('Error loading .fwcss file:', err));
         });
     }
 
