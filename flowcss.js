@@ -1,8 +1,13 @@
 class FlowCSS {
     constructor() {
         this.theme = 'light';
+        this.breakpoints = { 
+            sm: '640px', 
+            md: '768px', 
+            lg: '1024px', 
+            xl: '1280px' 
+        };
         this.mappings = this.initializeMappings();
-        this.breakpoints = { sm: '640px', md: '768px', lg: '1024px', xl: '1280px' };
         document.addEventListener("DOMContentLoaded", () => this.applyFlowCSS());
     }
 
@@ -58,6 +63,8 @@ class FlowCSS {
 
         rules.forEach(rule => {
             const [selector, properties] = rule.split("{");
+            if (!selector || !properties) return;
+
             const cssProperties = properties.split(";").map(p => p.trim()).filter(Boolean);
             let cssRule = `${selector.trim()} {`;
 
@@ -84,18 +91,24 @@ class FlowCSS {
             light: { "--primary-color": "#3498db", "--secondary-color": "#2ecc71" },
             dark: { "--primary-color": "#2c3e50", "--secondary-color": "#27ae60" },
         };
-        const themes = themeColors[this.theme];
-        return themes[value] || value;
+        const colors = themeColors[this.theme];
+        return colors[value] || value;
     }
 
     setTheme(newTheme) {
         this.theme = newTheme;
+        const themeColors = {
+            light: { "--primary-color": "#3498db", "--secondary-color": "#2ecc71" },
+            dark: { "--primary-color": "#2c3e50", "--secondary-color": "#27ae60" },
+        };
         document.documentElement.style.setProperty('--primary-color', themeColors[newTheme]["--primary-color"]);
         document.documentElement.style.setProperty('--secondary-color', themeColors[newTheme]["--secondary-color"]);
     }
 
     applyAnimation(element, animationType, duration = '1s') {
-        element.style.animation = `${animationType} ${duration} ease-in-out`;
+        if (element) {
+            element.style.animation = `${animationType} ${duration} ease-in-out`;
+        }
     }
 
     addBreakpoint(name, size) {
@@ -106,5 +119,8 @@ class FlowCSS {
 
 const flowCSS = new FlowCSS();
 flowCSS.setTheme("dark");
-flowCSS.applyAnimation(document.querySelector(".example"), "fade-in");
+const exampleElement = document.querySelector(".example");
+if (exampleElement) {
+    flowCSS.applyAnimation(exampleElement, "fade-in");
+}
 flowCSS.addBreakpoint("xxl", "1600px");
