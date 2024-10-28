@@ -54,7 +54,10 @@ class FlowCSS {
 
     applyFlowCSS() {
         const flowcssElements = document.querySelectorAll("flowcss");
-        flowcssElements.forEach(flow => this.parseFlowRules(flow.textContent));
+        flowcssElements.forEach(flow => {
+            this.parseFlowRules(flow.textContent);
+            flow.remove();
+        });
     }
 
     parseFlowRules(cssText) {
