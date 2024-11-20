@@ -1,14 +1,31 @@
-class FlowCSS {
+class FlexiCSS {
     constructor() {
         this.theme = 'light';
         this.breakpoints = { 
             sm: '640px', 
             md: '768px', 
             lg: '1024px', 
-            xl: '1280px' 
+            xl: '1280px',
+            xxl: '1600px'
         };
         this.mappings = this.initializeMappings();
-        document.addEventListener("DOMContentLoaded", () => this.applyFlowCSS());
+        this.defaultStyles = {};
+        this.customStyles = {};
+        this.themeVariables = {
+            light: {
+                "--primary-color": "#3498db",
+                "--secondary-color": "#2ecc71",
+                "--text-color": "#333",
+                "--background-color": "#fff"
+            },
+            dark: {
+                "--primary-color": "#2c3e50",
+                "--secondary-color": "#27ae60",
+                "--text-color": "#ddd",
+                "--background-color": "#181818"
+            }
+        };
+        document.addEventListener("DOMContentLoaded", () => this.applyFlexiCSS());
     }
 
     initializeMappings() {
@@ -29,6 +46,7 @@ class FlowCSS {
             md: `@media (max-width: ${this.breakpoints.md})`,
             lg: `@media (max-width: ${this.breakpoints.lg})`,
             xl: `@media (max-width: ${this.breakpoints.xl})`,
+            xxl: `@media (max-width: ${this.breakpoints.xxl})`,
             flex: "display: flex",
             grid: "display: grid",
             gap: "gap",
@@ -52,24 +70,27 @@ class FlowCSS {
         };
     }
 
-    applyFlowCSS() {
-        const flowcssElements = document.querySelectorAll("flowcss");
-        flowcssElements.forEach(flow => {
-            this.parseFlowRules(flow.textContent);
-            flow.remove(); 
-        });
-        const fwcssLinks = document.querySelectorAll("link[href$='.fwcss']");
-        fwcssLinks.forEach(link => {
+    applyFlexiCSS() {
+        const flexiCSSLinks = document.querySelectorAll("link[href$='.fcss']");
+        flexiCSSLinks.forEach(link => {
             fetch(link.href)
                 .then(response => response.text())
                 .then(cssText => {
-                    this.parseFlowRules(cssText);
+                    this.parseFlexiRules(cssText);
                 })
-                .catch(err => console.error('Error loading .fwcss file:', err));
+                .catch(err => console.error('Error loading .fcss file:', err));
         });
+
+        const flexiCSSElements = document.querySelectorAll("flexicss");
+        flexiCSSElements.forEach(flex => {
+            this.parseFlexiRules(flex.textContent);
+            flex.remove();
+        });
+
+        this.applyTheme();
     }
 
-    parseFlowRules(cssText) {
+    parseFlexiRules(cssText) {
         const style = document.createElement("style");
         const rules = cssText.trim().split("}").map(rule => rule.trim()).filter(Boolean);
 
@@ -99,22 +120,20 @@ class FlowCSS {
     }
 
     convertValue(value) {
-        const themeColors = {
-            light: { "--primary-color": "#3498db", "--secondary-color": "#2ecc71" },
-            dark: { "--primary-color": "#2c3e50", "--secondary-color": "#27ae60" },
-        };
-        const colors = themeColors[this.theme];
-        return colors[value] || value;
+        const themeColors = this.themeVariables[this.theme];
+        return themeColors[value] || value;
+    }
+
+    applyTheme() {
+        const themeColors = this.themeVariables[this.theme];
+        for (const [key, value] of Object.entries(themeColors)) {
+            document.documentElement.style.setProperty(key, value);
+        }
     }
 
     setTheme(newTheme) {
         this.theme = newTheme;
-        const themeColors = {
-            light: { "--primary-color": "#3498db", "--secondary-color": "#2ecc71" },
-            dark: { "--primary-color": "#2c3e50", "--secondary-color": "#27ae60" },
-        };
-        document.documentElement.style.setProperty('--primary-color', themeColors[newTheme]["--primary-color"]);
-        document.documentElement.style.setProperty('--secondary-color', themeColors[newTheme]["--secondary-color"]);
+        this.applyTheme();
     }
 
     applyAnimation(element, animationType, duration = '1s') {
@@ -127,12 +146,47 @@ class FlowCSS {
         this.breakpoints[name] = size;
         this.mappings[name] = `@media (max-width: ${size})`;
     }
-}
 
-const flowCSS = new FlowCSS();
-flowCSS.setTheme("dark");
+    addCustomStyle(selector, properties) {
+        if (!this.customStyles[selector]) {
+            this.customStyles[selector] = [];
+        }
+        this.customStyles[selector].push(properties);
+        this.updateCustomStyles();
+    }
+
+    updateCustomStyles() {
+        const style = document.createElement("style");
+        Object.keys(this.customStyles).forEach(selector => {
+            let cssRule = `${selector} {`;
+            this.customStyles[selector].forEach(properties => {
+                Object.keys(properties).forEach(prop => {
+                    const cssName = this.mappings[prop] || prop;
+                    const cssValue = this.convertValue(properties[prop]);
+                    cssRule += `${cssName}: ${cssValue};`;
+                });
+            });
+            cssRule += "}";
+            style.appendChild(document.createTextNode(cssRule));
+        });
+        document.head.appendChild(style);
+    }
+
+    static getInstance() {
+        if (!FlexiCSS.instance) {
+            FlexiCSS.instance = new FlexiCSS();
+        }
+        return FlexiCSS.instance;
+    }
+}
+const flexiCSS = FlexiCSS.getInstance();
+
+flexiCSS.setTheme("dark");
+flexiCSS.addBreakpoint("xxl", "1600px");
+
+flexiCSS.addCustomStyle('.my-class', { bg: 'primary', padding: '20px', radius: '5px' });
+
 const exampleElement = document.querySelector(".example");
 if (exampleElement) {
-    flowCSS.applyAnimation(exampleElement, "fade-in");
+    flexiCSS.applyAnimation(exampleElement, "fade-in");
 }
-flowCSS.addBreakpoint("xxl", "1600px");
